@@ -1,0 +1,150 @@
+#!/bin/env bash
+
+
+pre_rm_func() {
+[ -f $HOME/Desktop/1tomulti.txt ] && rm $HOME/Desktop/1tomulti.txt || true
+[ -f $HOME/Desktop/temppackages.txt ] && rm $HOME/Desktop/temppackages.txt || true
+
+}
+
+
+main_func() {
+pre_rm_func
+not_found() {
+	tput setaf 1 bold ; echo -e "$1 not found in the repos." ; tput sgr0
+	echo $1 | tee -a $HOME/Desktop/notfoundpackages.txt
+}
+
+
+touch $HOME/Desktop/temppackages.txt
+
+
+func_install() {
+	if pacman -Qi paru &> /dev/null;
+	then
+	aurhelper="paru"
+	elif pacman -Qi yay &> /dev/null;
+	then
+	aurhelper="yay"
+	elif pacman -Qi trizen &> /dev/null;
+	then
+	aurhelper="trizen"
+	fi
+
+	pkgnmlen=$( echo $1 | wc -c)
+	pkg=$( $aurhelper -Ss $1 | grep "\/$1 " | gawk '{print $1}' )
+	pkgg=$( $aurhelper -Sg | grep "$1" | sort | head -n 1 | cut -c 1-$pkgnmlen )
+	if [[ "$pkg" == */$1 ]];
+	then
+		echo $pkg | tee -a $HOME/Desktop/temppackages.txt
+	elif [ "$pkgg" == "$1" ];
+	then
+		echo -e "group/${pkgg}" | tee -a $HOME/Desktop/temppackages.txt
+	else
+		not_found $1
+	fi
+}
+
+
+	count=0
+	for pkgname in "${pkglist[@]}" ; do
+	count=$[count+1]
+	tput setaf 3 bold ;echo -e "Checking package  $count - $pkgname"; tput sgr0;
+	func_install $pkgname
+	done
+}
+
+
+rm_func() {
+while true; do
+	read -p "Do you want to remove work files? (y/n): " remove
+	if [[ $remove == "y" ]] || [[ $remove == "Y" ]] || [[ $remove == "yes" ]] || [[ $remove == "yeah" ]] || [[ $remove == "YES" ]] || [[ $remove == "yup" ]];
+	then
+	[ -f $HOME/Desktop/1tomulti.txt ] && rm $HOME/Desktop/1tomulti.txt || true
+	[ -f $HOME/Desktop/temppackages.txt ] && rm $HOME/Desktop/temppackages.txt || true
+	break
+	elif [[ $remove == "n" ]] || [[ $remove == "N" ]] || [[ $remove == "no" ]] || [[ $remove == "nah" ]] || [[ $remove == "NO" ]] || [[ $remove == "nope" ]];
+	then
+	break
+	fi
+done
+}
+
+
+if [[ $1 == "-h" ]] || [[ $1 == "--help" ]];
+then
+	echo -ne "
+SYNOPSIS
+pacs2repo -[ flag ] [ inputfile ] [ outputfile ]
+
+FLAGS
+
+-sug Reads packages from inputfile and outputs packages with the repos thay are available from and autometically uniquely sorts and create gaps between same packages from different repos and outputs to outputfile.
+\n-su Reads packages from inputfile and outputs packages with the repos thay are available from and autometically uniquely sorts but doesn't create gaps between same packages from different repos and outputs to outputfile.
+\n-s Reads packages from inputfile and outputs packages with the repos thay are available from and autometically sorts but doesn't create gaps between same packages from different repos and outputs to outputfile.
+\n-sugt Reads packages from inputfile and outputs packages with the repos thay are available from and autometically uniquely sorts and create gaps between same packages from different repos and outputs to terminal.
+\n-sut Reads packages from inputfile and outputs packages with the repos thay are available from and autometically uniquely sorts but doesn't create gaps between same packages from different repos and outputs to terminal.
+\n-st Reads packages from inputfile and outputs packages with the repos thay are available from and autometically sorts but doesn't create gaps between same packages from different repos and outputs to terminal.\n\n\n\n"
+
+elif [[ $1 != "-sug" ]] && [[ $1 != "-su" ]] && [[ $1 != "-s" ]] && [[ $1 != "-sugt" ]] && [[ $1 != "-sut" ]] && [[ $1 != "-st" ]];
+then
+    echo -n "$1 is not a valid flag and thus being used as inputfile"
+	if [[ $(cat $1 | wc -l) -le 1  ]];
+	then
+		for i in $(cat "$1"); do
+		echo "$i" | tee -a $HOME/Desktop/1tomulti.txt
+		done
+		declare -a pkglist
+		pkglist=(`cat "$HOME/Desktop/1tomulti.txt"`)
+	else
+		pkgfilename="$1"
+		declare -a pkglist
+		pkglist=(`cat "$pkgfilename"`)
+	fi
+
+	main_func
+
+    cat $HOME/Desktop/temppackages.txt | grep -v "^$" | sort -u > $2
+    rm_func
+
+elif [[ $1 == "-sug" ]] || [[ $1 == "-su" ]] || [[ $1 == "-s" ]] || [[ $1 == "-sugt" ]] || [[ $1 == "-sut" ]] || [[ $1 == "-st" ]];
+then
+	if [[ $(cat $2 | wc -l) -le 1  ]];
+	then
+		for i in $(cat "$2"); do
+		echo "$i" | tee -a $HOME/Desktop/1tomulti.txt
+		done
+		declare -a pkglist
+		pkglist=(`cat "$HOME/Desktop/1tomulti.txt"`)
+	else
+		pkgfilename="$2"
+		declare -a pkglist
+		pkglist=(`cat "$pkgfilename"`)
+	fi
+
+	main_func
+	if [[ $1 == "-sug" ]];
+	then
+		cat $HOME/Desktop/temppackages.txt | grep -v "^$" | sort -u | sed -e "s/ /          /" > $3
+	elif [[ $1 == "-su" ]];
+	then
+		cat $HOME/Desktop/temppackages.txt | grep -v "^$" | sort -u > $3
+	elif [[ $1 == "-s" ]];
+	then
+		cat $HOME/Desktop/temppackages.txt | grep -v "^$" | sort
+	elif [[ $1 == "-sugt" ]];
+	then
+		cat $HOME/Desktop/temppackages.txt | grep -v "^$" | sort -u | sed -e "s/ /          /"
+	elif [[ $1 == "-sut" ]];
+	then
+		cat $HOME/Desktop/temppackages.txt | grep -v "^$" | sort -u
+	elif [[ $1 == "-st" ]];
+	then
+		cat $HOME/Desktop/temppackages.txt | grep -v "^$" | sort
+	else
+		cat $HOME/Desktop/temppackages.txt | grep -v "^$" | sort -u > $3
+	fi
+	rm_func
+fi
+
+
