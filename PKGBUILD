@@ -15,6 +15,7 @@ sha256sums=('SKIP')
 package() {
     cd "$pkgname"
     install -Dm755 pacs2repo "$pkgdir/usr/bin/pacs2repo"
+    install -Dm755 pacs2repo-gui "$pkgdir/usr/bin/pacs2repo-gui"
     install -Dm644 pacs2repo.1.gz "$pkgdir/usr/share/man/man1/pacs2repo.1.gz"
     install -Dm644 pacs2repo.1.gz "$pkgdir/usr/share/man/man1/pacs2repo-gui.1.gz"
 }
