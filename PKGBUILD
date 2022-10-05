@@ -6,6 +6,7 @@ pkgdesc="List all provided packages with their respective repositories."
 arch=('any')
 url="https://github.com/ramallahos/$pkgname"
 license=('MIT')
+depends=('yad')
 optdepends=('paru')
 makedepends=('coreutils')
 backup=('etc/pacman.conf')
