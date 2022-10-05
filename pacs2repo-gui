@@ -1,0 +1,14 @@
+#!/bin/env bash
+
+data=$( yad --form --field="Flag:CB" "\-sug!\-su!\-s!\-sugt!\-sut!\-st" \
+                   --field="Input File:FL" \
+                   --field="Output File:SFL" )
+
+flag=$( echo $data | awk -F "|" '{print $1}' )
+input=$( echo $data | awk -F "|" '{print $2}' )
+output=$( echo $data | awk -F "|" '{print $3}' )
+
+if [[ $input != "" ]];
+then
+pacs2repo "${flag}g" $input $output
+fi
